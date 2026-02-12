@@ -8,10 +8,18 @@ import MemoryStore from "memorystore";
 import OpenAI from "openai";
 import QRCode from "qrcode";
 
-const openaiClient = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-});
+let openaiClient: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!openaiClient) {
+    const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error("No OpenAI API key configured. Set OPENAI_API_KEY in Railway variables.");
+    openaiClient = new OpenAI({
+      apiKey,
+      ...(process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ? { baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL } : {}),
+    });
+  }
+  return openaiClient;
+}
 
 export async function registerRoutes(
   httpServer: Server,
@@ -193,7 +201,7 @@ export async function registerRoutes(
       Rules: Mark 2-3 items as bestseller, 2 as chef's pick, 1-2 as today's special. Generate around 15 items total. Keep descriptions short (one line). 
       Do not include any markdown formatting.`;
 
-      const response = await openaiClient.chat.completions.create({
+      const response = await getOpenAI().chat.completions.create({
         model: "gpt-5.1",
         messages: [
           { role: "system", content: "You are a helpful assistant that generates restaurant menus in JSON format." },
