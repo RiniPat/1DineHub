@@ -56,12 +56,19 @@ async function buildAll() {
     define: {
       "process.env.NODE_ENV": '"production"',
     },
+    alias: {
+      "@shared": "./shared",
+    },
     minify: true,
     external: externals,
     logLevel: "info",
   });
 }
 
+buildAll().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
 buildAll().catch((err) => {
   console.error(err);
   process.exit(1);
